@@ -2,11 +2,11 @@ import React, { useState, useEffect } from 'react';
 import Layout from '../components/Layout';
 import api from '../utils/api';
 import { format } from 'date-fns';
-import { FiBell, FiCheck, FiCheckCircle, FiArrowDownCircle, FiArrowUpCircle, FiRepeat, FiMegaphone, FiShield } from 'react-icons/fi';
+import { FiBell, FiCheck, FiCheckCircle, FiArrowDownCircle, FiArrowUpCircle, FiRepeat, FiRadio, FiShield } from 'react-icons/fi';
 
 const typeIcon = (type) => ({
   deposit: <FiArrowDownCircle />, withdrawal: <FiArrowUpCircle />, transfer: <FiRepeat />,
-  activation: <FiCheckCircle />, announcement: <FiMegaphone />, security: <FiShield />, system: <FiBell />
+  activation: <FiCheckCircle />, announcement: <FiRadio />, security: <FiShield />, system: <FiBell />
 }[type] || <FiBell />);
 
 const typeColor = (type) => ({
@@ -101,3 +101,4 @@ const NotificationsPage = () => {
 };
 
 export default NotificationsPage;
+  
