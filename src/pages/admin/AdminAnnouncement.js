@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import Layout from '../../components/Layout';
 import api from '../../utils/api';
 import toast from 'react-hot-toast';
-import { FiMegaphone, FiSend } from 'react-icons/fi';
+import { FiRadio, FiSend } from 'react-icons/fi';
 
 const AdminAnnouncement = () => {
   const [form, setForm] = useState({ title: '', message: '' });
@@ -63,7 +63,7 @@ const AdminAnnouncement = () => {
                 <div style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.5 }}>Preview</div>
                 <div style={{ display: 'flex', gap: 14, alignItems: 'flex-start' }}>
                   <div style={{ width: 40, height: 40, borderRadius: 12, background: 'rgba(255,71,87,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#ff4757', fontSize: 18, flexShrink: 0 }}>
-                    <FiMegaphone />
+                    <FiRadio />
                   </div>
                   <div>
                     <div style={{ fontWeight: 600, fontSize: 14, marginBottom: 4 }}>{form.title || 'Announcement title...'}</div>
@@ -95,3 +95,4 @@ const AdminAnnouncement = () => {
 };
 
 export default AdminAnnouncement;
+  
