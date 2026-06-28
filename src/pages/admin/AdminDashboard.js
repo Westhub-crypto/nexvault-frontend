@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import Layout from '../../components/Layout';
 import api from '../../utils/api';
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, LineChart, Line } from 'recharts';
+
 import { FiUsers, FiArrowDownCircle, FiArrowUpCircle, FiClock, FiDollarSign, FiActivity, FiAlertCircle } from 'react-icons/fi';
 import { format } from 'date-fns';
 
@@ -112,3 +112,4 @@ const AdminDashboard = () => {
 };
 
 export default AdminDashboard;
+              
