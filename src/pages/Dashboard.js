@@ -9,7 +9,7 @@ import { format } from 'date-fns';
 
 const StatCard = ({ label, value, icon, color, sub }) => (
   <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 16, padding: 24, display: 'flex', flexDirection: 'column', gap: 12, position: 'relative', overflow: 'hidden' }}>
-    <div style={{ position: 'absolute', top: -20, right: -20, width: 80, height: 80, borderRadius: '50%', background: `radial-gradient(circle, ${color}22, transparent 70%)` }} />
+    <div style={{ position: 'absolute', top: -20, right: -20, width: 80, height: 80, borderRadius: '50%', background: `${color}22` }} />
     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
       <span style={{ fontSize: 13, color: 'var(--text-secondary)', fontWeight: 500 }}>{label}</span>
       <div style={{ width: 36, height: 36, borderRadius: 10, background: `${color}18`, display: 'flex', alignItems: 'center', justifyContent: 'center', color, fontSize: 18 }}>{icon}</div>
@@ -19,44 +19,46 @@ const StatCard = ({ label, value, icon, color, sub }) => (
   </div>
 );
 
-const statusIcon = (status) => {
+const txTypeLabel = (type) => ({ deposit: 'Deposit', withdrawal: 'Withdrawal', transfer_in: 'Received', transfer_out: 'Sent', activation: 'Activation', gas_fee: 'Gas Fee' }[type] || type);
+const txColor = (type) => (['deposit', 'transfer_in'].includes(type) ? '#00d4a3' : '#ff4757');
+
+const StatusIcon = ({ status }) => {
   if (status === 'approved' || status === 'completed') return <FiCheckCircle style={{ color: '#00d4a3' }} />;
   if (status === 'rejected') return <FiXCircle style={{ color: '#ff4757' }} />;
   return <FiClock style={{ color: '#ffa502' }} />;
 };
 
-const txTypeLabel = (type) => ({
-  deposit: 'Deposit', withdrawal: 'Withdrawal', transfer_in: 'Received', transfer_out: 'Sent', activation: 'Activation', gas_fee: 'Gas Fee'
-}[type] || type);
-
-const txColor = (type) => (['deposit', 'transfer_in'].includes(type) ? '#00d4a3' : '#ff4757');
-
 const Dashboard = () => {
   const { user } = useAuth();
   const [transactions, setTransactions] = useState([]);
   const [chartData, setChartData] = useState([]);
-  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetch = async () => {
+    const fetchData = async () => {
       try {
         const { data } = await api.get('/transactions?limit=10');
         setTransactions(data.transactions);
-        // Build chart from last 7 days
         const days = [];
         for (let i = 6; i >= 0; i--) {
-          const d = new Date(); d.setDate(d.getDate() - i);
+          const d = new Date();
+          d.setDate(d.getDate() - i);
           const label = format(d, 'MMM d');
           const dayTxs = data.transactions.filter(t => {
-            const td = new Date(t.createdAt); return td.toDateString() === d.toDateString() && t.status === 'approved';
+            const td = new Date(t.createdAt);
+            return td.toDateString() === d.toDateString() && t.status === 'approved';
           });
-          days.push({ date: label, deposits: dayTxs.filter(t => t.type === 'deposit').reduce((a, t) => a + t.amount, 0), withdrawals: dayTxs.filter(t => t.type === 'withdrawal').reduce((a, t) => a + t.amount, 0) });
+          days.push({
+            date: label,
+            deposits: dayTxs.filter(t => t.type === 'deposit').reduce((a, t) => a + t.amount, 0),
+            withdrawals: dayTxs.filter(t => t.type === 'withdrawal').reduce((a, t) => a + t.amount, 0),
+          });
         }
         setChartData(days);
-      } catch {}
-      setLoading(false);
+      } catch (err) {
+        console.error('Dashboard fetch error:', err.message);
+      }
     };
-    fetch();
+    fetchData();
   }, []);
 
   if (user?.status !== 'active') {
@@ -92,7 +94,6 @@ const Dashboard = () => {
   return (
     <Layout>
       <div style={{ padding: '28px 24px', maxWidth: 1280, margin: '0 auto' }}>
-        {/* Header */}
         <div style={{ marginBottom: 28 }}>
           <h1 style={{ fontFamily: 'Space Grotesk', fontSize: 26, fontWeight: 700, marginBottom: 4 }}>
             Welcome back, {user?.fullName?.split(' ')[0]} 👋
@@ -109,16 +110,9 @@ const Dashboard = () => {
             ${user?.balance?.toFixed(2) || '0.00'}
           </div>
           <div style={{ fontSize: 14, color: 'var(--text-muted)' }}>USDT • Available for transfer & withdrawal</div>
-          {/* Action buttons */}
           <div style={{ display: 'flex', gap: 12, marginTop: 28, flexWrap: 'wrap' }}>
             {actions.map(a => (
-              <Link key={a.to} to={a.to} style={{
-                display: 'flex', alignItems: 'center', gap: 8,
-                padding: '10px 20px', borderRadius: 10,
-                background: a.bg, color: a.color,
-                textDecoration: 'none', fontSize: 14, fontWeight: 600,
-                border: `1px solid ${a.color}30`, transition: 'all 0.2s'
-              }}>
+              <Link key={a.to} to={a.to} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 20px', borderRadius: 10, background: a.bg, color: a.color, textDecoration: 'none', fontSize: 14, fontWeight: 600, border: `1px solid ${a.color}30`, transition: 'all 0.2s' }}>
                 {a.icon} {a.label}
               </Link>
             ))}
@@ -167,29 +161,25 @@ const Dashboard = () => {
           {transactions.length === 0 ? (
             <div style={{ padding: 48, textAlign: 'center', color: 'var(--text-muted)', fontSize: 14 }}>No transactions yet</div>
           ) : (
-            <div>
-              {transactions.slice(0, 8).map(tx => (
-                <div key={tx._id} style={{ padding: '16px 24px', display: 'flex', alignItems: 'center', gap: 16, borderBottom: '1px solid var(--border)' }}>
-                  <div style={{ width: 40, height: 40, borderRadius: 10, background: `${txColor(tx.type)}18`, display: 'flex', alignItems: 'center', justifyContent: 'center', color: txColor(tx.type), fontSize: 18, flexShrink: 0 }}>
-                    {['deposit', 'transfer_in'].includes(tx.type) ? <FiArrowDownCircle /> : <FiArrowUpCircle />}
+            transactions.slice(0, 8).map(tx => (
+              <div key={tx._id} style={{ padding: '16px 24px', display: 'flex', alignItems: 'center', gap: 16, borderBottom: '1px solid var(--border)' }}>
+                <div style={{ width: 40, height: 40, borderRadius: 10, background: `${txColor(tx.type)}18`, display: 'flex', alignItems: 'center', justifyContent: 'center', color: txColor(tx.type), fontSize: 18, flexShrink: 0 }}>
+                  {['deposit', 'transfer_in'].includes(tx.type) ? <FiArrowDownCircle /> : <FiArrowUpCircle />}
+                </div>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontWeight: 500, fontSize: 14 }}>{txTypeLabel(tx.type)}</div>
+                  <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 2 }}>{format(new Date(tx.createdAt), 'MMM d, yyyy HH:mm')}</div>
+                </div>
+                <div style={{ textAlign: 'right' }}>
+                  <div style={{ fontWeight: 700, color: txColor(tx.type), fontSize: 15 }}>
+                    {['deposit', 'transfer_in'].includes(tx.type) ? '+' : '-'}${tx.amount.toFixed(2)}
                   </div>
-                  <div style={{ flex: 1 }}>
-                    <div style={{ fontWeight: 500, fontSize: 14 }}>{txTypeLabel(tx.type)}</div>
-                    <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 2 }}>{format(new Date(tx.createdAt), 'MMM d, yyyy HH:mm')}</div>
-                  </div>
-                  <div style={{ textAlign: 'right' }}>
-                    <div style={{ fontWeight: 700, color: txColor(tx.type), fontSize: 15 }}>
-                      {['deposit', 'transfer_in'].includes(tx.type) ? '+' : '-'}${tx.amount.toFixed(2)}
-                    </div>
-                    <div style={{ fontSize: 11, marginTop: 4 }}>
-                      <span style={{ padding: '2px 8px', borderRadius: 10, fontSize: 11, fontWeight: 600, background: tx.status === 'approved' || tx.status === 'completed' ? 'rgba(0,212,163,0.12)' : tx.status === 'rejected' ? 'rgba(255,71,87,0.12)' : 'rgba(255,165,2,0.12)', color: tx.status === 'approved' || tx.status === 'completed' ? '#00d4a3' : tx.status === 'rejected' ? '#ff4757' : '#ffa502' }}>
-                        {tx.status}
-                      </span>
-                    </div>
+                  <div style={{ marginTop: 4 }}>
+                    <StatusIcon status={tx.status} />
                   </div>
                 </div>
-              ))}
-            </div>
+              </div>
+            ))
           )}
         </div>
       </div>
@@ -198,3 +188,4 @@ const Dashboard = () => {
 };
 
 export default Dashboard;
+  
