@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import Layout from '../components/Layout';
 import api from '../utils/api';
 import { format } from 'date-fns';
@@ -9,9 +9,18 @@ const typeColor = (type) => ['deposit', 'transfer_in'].includes(type) ? '#00d4a3
 const typeIcon = (type) => ['deposit', 'transfer_in'].includes(type) ? <FiArrowDownCircle /> : ['withdrawal', 'gas_fee'].includes(type) ? <FiArrowUpCircle /> : <FiRepeat />;
 
 const StatusBadge = ({ status }) => {
-  const colors = { pending: ['#ffa502', 'rgba(255,165,2,0.1)'], approved: ['#00d4a3', 'rgba(0,212,163,0.1)'], rejected: ['#ff4757', 'rgba(255,71,87,0.1)'], completed: ['#7c6ef7', 'rgba(124,110,247,0.1)'] };
+  const colors = {
+    pending: ['#ffa502', 'rgba(255,165,2,0.1)'],
+    approved: ['#00d4a3', 'rgba(0,212,163,0.1)'],
+    rejected: ['#ff4757', 'rgba(255,71,87,0.1)'],
+    completed: ['#7c6ef7', 'rgba(124,110,247,0.1)'],
+  };
   const [color, bg] = colors[status] || ['#8892a4', 'rgba(136,146,164,0.1)'];
-  return <span style={{ padding: '3px 10px', borderRadius: 20, fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.5, color, background: bg, border: `1px solid ${color}40` }}>{status}</span>;
+  return (
+    <span style={{ padding: '3px 10px', borderRadius: 20, fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.5, color, background: bg, border: `1px solid ${color}40` }}>
+      {status}
+    </span>
+  );
 };
 
 const TransactionsPage = () => {
@@ -22,7 +31,7 @@ const TransactionsPage = () => {
   const [total, setTotal] = useState(0);
   const LIMIT = 15;
 
-  const fetch = async () => {
+  const fetchTransactions = useCallback(async () => {
     setLoading(true);
     try {
       const params = new URLSearchParams({ page, limit: LIMIT });
@@ -30,11 +39,15 @@ const TransactionsPage = () => {
       const { data } = await api.get(`/transactions?${params}`);
       setTransactions(data.transactions);
       setTotal(data.total);
-    } catch {}
+    } catch (err) {
+      console.error('Transactions fetch error:', err.message);
+    }
     setLoading(false);
-  };
+  }, [filter, page]);
 
-  useEffect(() => { fetch(); }, [filter, page]);
+  useEffect(() => {
+    fetchTransactions();
+  }, [fetchTransactions]);
 
   const filters = [
     { label: 'All', value: '' },
@@ -50,16 +63,15 @@ const TransactionsPage = () => {
         <h1 style={{ fontFamily: 'Space Grotesk', fontSize: 24, fontWeight: 700, marginBottom: 6 }}>Transaction History</h1>
         <p style={{ color: 'var(--text-secondary)', fontSize: 14, marginBottom: 24 }}>{total} total transactions</p>
 
-        {/* Filters */}
-        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 20 }}>
-          <FiFilter style={{ color: 'var(--text-muted)', marginTop: 10, marginRight: 4 }} />
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 20, alignItems: 'center' }}>
+          <FiFilter style={{ color: 'var(--text-muted)', marginRight: 4 }} />
           {filters.map(f => (
             <button key={f.value} onClick={() => { setFilter(f.value); setPage(1); }} style={{
-              padding: '8px 16px', borderRadius: 20, fontSize: 13, fontWeight: 500, cursor: 'pointer', border: 'none',
+              padding: '8px 16px', borderRadius: 20, fontSize: 13, fontWeight: 500, cursor: 'pointer',
               background: filter === f.value ? 'rgba(0,212,163,0.15)' : 'var(--bg-card)',
               color: filter === f.value ? '#00d4a3' : 'var(--text-secondary)',
               border: `1px solid ${filter === f.value ? 'rgba(0,212,163,0.4)' : 'var(--border)'}`,
-              transition: 'all 0.2s'
+              transition: 'all 0.2s',
             }}>{f.label}</button>
           ))}
         </div>
@@ -74,7 +86,6 @@ const TransactionsPage = () => {
             </div>
           ) : (
             <>
-              {/* Desktop table */}
               <div style={{ overflowX: 'auto' }}>
                 <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                   <thead>
@@ -86,7 +97,10 @@ const TransactionsPage = () => {
                   </thead>
                   <tbody>
                     {transactions.map(tx => (
-                      <tr key={tx._id} style={{ transition: 'background 0.15s' }} onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.02)'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+                      <tr key={tx._id}
+                        onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.02)'}
+                        onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                        style={{ transition: 'background 0.15s' }}>
                         <td style={{ padding: '16px 20px', borderBottom: '1px solid var(--border)' }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                             <div style={{ width: 36, height: 36, borderRadius: 10, background: `${typeColor(tx.type)}18`, display: 'flex', alignItems: 'center', justifyContent: 'center', color: typeColor(tx.type), fontSize: 16, flexShrink: 0 }}>
@@ -109,14 +123,10 @@ const TransactionsPage = () => {
                   </tbody>
                 </table>
               </div>
-
-              {/* Pagination */}
               {total > LIMIT && (
                 <div style={{ padding: '16px 20px', display: 'flex', justifyContent: 'center', gap: 8, borderTop: '1px solid var(--border)' }}>
                   {Array.from({ length: Math.ceil(total / LIMIT) }, (_, i) => (
-                    <button key={i} onClick={() => setPage(i + 1)} style={{ width: 34, height: 34, borderRadius: 8, border: `1px solid ${page === i + 1 ? 'rgba(0,212,163,0.4)' : 'var(--border)'}`, background: page === i + 1 ? 'rgba(0,212,163,0.1)' : 'transparent', color: page === i + 1 ? '#00d4a3' : 'var(--text-secondary)', cursor: 'pointer', fontWeight: 600, fontSize: 13 }}>
-                      {i + 1}
-                    </button>
+                    <button key={i} onClick={() => setPage(i + 1)} style={{ width: 34, height: 34, borderRadius: 8, border: `1px solid ${page === i + 1 ? 'rgba(0,212,163,0.4)' : 'var(--border)'}`, background: page === i + 1 ? 'rgba(0,212,163,0.1)' : 'transparent', color: page === i + 1 ? '#00d4a3' : 'var(--text-secondary)', cursor: 'pointer', fontWeight: 600, fontSize: 13 }}>{i + 1}</button>
                   ))}
                 </div>
               )}
@@ -129,3 +139,4 @@ const TransactionsPage = () => {
 };
 
 export default TransactionsPage;
+    
