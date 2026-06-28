@@ -23,8 +23,16 @@ const LoginPage = () => {
       toast.success('Welcome back!');
       navigate(isAdmin ? '/admin' : '/dashboard');
     } catch (err) {
-      const msg = err.response?.data?.message
-        || (err.message === 'Network Error' ? 'Cannot reach server. Check your API URL in Render environment variables.' : 'Login failed. Please try again.');
+      let msg = 'Login failed. Please try again.';
+      if (err.response?.data?.message) {
+        msg = err.response.data.message;
+      } else if (err.response?.data?.error) {
+        msg = err.response.data.error;
+      } else if (err.message === 'Network Error') {
+        msg = `Cannot reach server at ${API_URL}. Check Render backend is running and REACT_APP_API_URL is set correctly.`;
+      } else if (err.code === 'ECONNABORTED') {
+        msg = 'Request timed out. The server may be sleeping — try again in 30 seconds.';
+      }
       setError(msg);
       toast.error(msg);
     } finally {
@@ -44,7 +52,6 @@ const LoginPage = () => {
       <div style={{ position: 'fixed', bottom: '15%', right: '5%', width: 400, height: 400, borderRadius: '50%', background: 'radial-gradient(circle, rgba(124,110,247,0.06), transparent 70%)', pointerEvents: 'none' }} />
 
       <div style={{ width: '100%', maxWidth: 420, animation: 'fadeUp 0.5s ease forwards' }}>
-        {/* Logo */}
         <div style={{ textAlign: 'center', marginBottom: 40 }}>
           <Link to="/" style={{ display: 'inline-flex', alignItems: 'center', gap: 10, textDecoration: 'none' }}>
             <div style={{ width: 44, height: 44, borderRadius: 12, background: 'linear-gradient(135deg, #00d4a3, #7c6ef7)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22, fontWeight: 800, color: '#0d1117', fontFamily: 'Space Grotesk' }}>N</div>
@@ -53,10 +60,8 @@ const LoginPage = () => {
           <p style={{ color: '#8892a4', marginTop: 12, fontSize: 15 }}>Sign in to your wallet</p>
         </div>
 
-        {/* Card */}
         <div style={{ background: '#161b27', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 20, padding: 36 }}>
 
-          {/* Error banner */}
           {error && (
             <div style={{ marginBottom: 20, padding: '14px 16px', borderRadius: 10, background: 'rgba(255,71,87,0.08)', border: '1px solid rgba(255,71,87,0.25)', display: 'flex', alignItems: 'flex-start', gap: 10 }}>
               <FiAlertCircle style={{ color: '#ff4757', marginTop: 1, flexShrink: 0 }} />
@@ -69,9 +74,7 @@ const LoginPage = () => {
               <label style={{ display: 'block', fontSize: 13, fontWeight: 500, color: '#8892a4', marginBottom: 8 }}>Email Address</label>
               <div style={{ position: 'relative' }}>
                 <FiMail style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', color: '#4a5568', fontSize: 16, zIndex: 1 }} />
-                <input
-                  type="email" required
-                  value={form.email}
+                <input type="email" required value={form.email}
                   onChange={e => { setForm({ ...form, email: e.target.value }); setError(''); }}
                   placeholder="you@example.com"
                   style={{ width: '100%', padding: '12px 16px 12px 42px', background: '#0d1117', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 10, color: '#e2e8f0', fontSize: 14, outline: 'none', boxSizing: 'border-box', transition: 'border-color 0.2s', fontFamily: 'inherit' }}
@@ -85,9 +88,7 @@ const LoginPage = () => {
               <label style={{ display: 'block', fontSize: 13, fontWeight: 500, color: '#8892a4', marginBottom: 8 }}>Password</label>
               <div style={{ position: 'relative' }}>
                 <FiLock style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', color: '#4a5568', fontSize: 16, zIndex: 1 }} />
-                <input
-                  type={showPass ? 'text' : 'password'} required
-                  value={form.password}
+                <input type={showPass ? 'text' : 'password'} required value={form.password}
                   onChange={e => { setForm({ ...form, password: e.target.value }); setError(''); }}
                   placeholder="Enter your password"
                   style={{ width: '100%', padding: '12px 44px 12px 42px', background: '#0d1117', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 10, color: '#e2e8f0', fontSize: 14, outline: 'none', boxSizing: 'border-box', transition: 'border-color 0.2s', fontFamily: 'inherit' }}
@@ -106,7 +107,7 @@ const LoginPage = () => {
               background: loading ? '#1a2035' : 'linear-gradient(135deg, #00d4a3, #00b890)',
               color: loading ? '#8892a4' : '#0d1117', fontSize: 15, fontWeight: 700,
               display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-              transition: 'all 0.2s', boxShadow: loading ? 'none' : '0 4px 20px rgba(0,212,163,0.3)'
+              transition: 'all 0.2s', boxShadow: loading ? 'none' : '0 4px 20px rgba(0,212,163,0.3)',
             }}>
               {loading ? 'Signing in...' : <><span>Sign In</span><FiArrowRight /></>}
             </button>
@@ -117,9 +118,9 @@ const LoginPage = () => {
             <Link to="/register" style={{ color: '#00d4a3', fontWeight: 600, textDecoration: 'none' }}>Create account</Link>
           </p>
 
-          {/* Debug info - shows API being used */}
-          <p style={{ textAlign: 'center', marginTop: 16, fontSize: 10, color: '#2d3748', wordBreak: 'break-all' }}>
-            API: {API_URL}
+          {/* API endpoint shown for debugging */}
+          <p style={{ textAlign: 'center', marginTop: 16, fontSize: 10, color: '#1e2535', wordBreak: 'break-all' }}>
+            {API_URL}
           </p>
         </div>
       </div>
@@ -128,4 +129,4 @@ const LoginPage = () => {
 };
 
 export default LoginPage;
-      
+    
