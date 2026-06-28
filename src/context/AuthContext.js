@@ -1,7 +1,12 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import axios from 'axios';
 
-const API = process.env.REACT_APP_API_URL || '/api';
+const API = process.env.REACT_APP_API_URL || 'https://nexvault-api.onrender.com/api';
+
+// Set base URL globally
+axios.defaults.baseURL = API;
+axios.defaults.withCredentials = false;
+
 const AuthContext = createContext(null);
 
 export const AuthProvider = ({ children }) => {
@@ -16,7 +21,8 @@ export const AuthProvider = ({ children }) => {
     } else {
       setLoading(false);
     }
-  }, [token]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const fetchMe = async () => {
     try {
@@ -67,3 +73,4 @@ export const AuthProvider = ({ children }) => {
 
 export const useAuth = () => useContext(AuthContext);
 export default AuthContext;
+        
