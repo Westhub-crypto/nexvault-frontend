@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import Layout from '../../components/Layout';
 import api from '../../utils/api';
 import toast from 'react-hot-toast';
@@ -32,7 +32,7 @@ const AdminUsers = () => {
   const [balanceInput, setBalanceInput] = useState({ amount: '', note: '' });
   const LIMIT = 20;
 
-  const fetch = async () => {
+  const fetchUsers = useCallback(async () => {
     setLoading(true);
     try {
       const params = new URLSearchParams({ page, limit: LIMIT });
@@ -40,11 +40,13 @@ const AdminUsers = () => {
       if (statusFilter) params.append('status', statusFilter);
       const { data } = await api.get(`/admin/users?${params}`);
       setUsers(data.users); setTotal(data.total);
-    } catch {}
+    } catch (err) {
+      console.error('Fetch users error:', err.message);
+    }
     setLoading(false);
-  };
+  }, [search, statusFilter, page]);
 
-  useEffect(() => { fetch(); }, [search, statusFilter, page]);
+  useEffect(() => { fetchUsers(); }, [fetchUsers]);
 
   const action = async (type, userId, extra = {}) => {
     try {
@@ -55,7 +57,7 @@ const AdminUsers = () => {
       else if (type === 'deduct') await api.put(`/admin/users/${userId}/deduct`, extra);
       toast.success('Action completed!');
       setModal(null);
-      fetch();
+      fetchUsers();
     } catch (err) { toast.error(err.response?.data?.message || 'Action failed.'); }
   };
 
@@ -170,3 +172,4 @@ const AdminUsers = () => {
 };
 
 export default AdminUsers;
+  
