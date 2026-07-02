@@ -5,22 +5,18 @@ import { format } from 'date-fns';
 import { FiArrowDownCircle, FiArrowUpCircle, FiRepeat, FiFilter } from 'react-icons/fi';
 
 const typeLabel = (type) => ({ deposit: 'Deposit', withdrawal: 'Withdrawal', transfer_in: 'Received', transfer_out: 'Sent', activation: 'Activation', gas_fee: 'Gas Fee' }[type] || type);
-const typeColor = (type) => ['deposit', 'transfer_in'].includes(type) ? '#00d4a3' : '#ff4757';
+const typeColor = (type) => ['deposit', 'transfer_in'].includes(type) ? '#00e6a8' : '#ff5c72';
 const typeIcon = (type) => ['deposit', 'transfer_in'].includes(type) ? <FiArrowDownCircle /> : ['withdrawal', 'gas_fee'].includes(type) ? <FiArrowUpCircle /> : <FiRepeat />;
 
 const StatusBadge = ({ status }) => {
-  const colors = {
-    pending: ['#ffa502', 'rgba(255,165,2,0.1)'],
-    approved: ['#00d4a3', 'rgba(0,212,163,0.1)'],
-    rejected: ['#ff4757', 'rgba(255,71,87,0.1)'],
-    completed: ['#7c6ef7', 'rgba(124,110,247,0.1)'],
+  const map = {
+    pending: ['#ffb547', 'rgba(255,181,71,0.1)', 'rgba(255,181,71,0.3)'],
+    approved: ['#00e6a8', 'rgba(0,230,168,0.1)', 'rgba(0,230,168,0.3)'],
+    rejected: ['#ff5c72', 'rgba(255,92,114,0.1)', 'rgba(255,92,114,0.3)'],
+    completed: ['#8b7cf6', 'rgba(139,124,246,0.1)', 'rgba(139,124,246,0.3)'],
   };
-  const [color, bg] = colors[status] || ['#8892a4', 'rgba(136,146,164,0.1)'];
-  return (
-    <span style={{ padding: '3px 10px', borderRadius: 20, fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.5, color, background: bg, border: `1px solid ${color}40` }}>
-      {status}
-    </span>
-  );
+  const [color, bg, border] = map[status] || ['#94a3b8', 'rgba(148,163,184,0.1)', 'rgba(148,163,184,0.3)'];
+  return <span style={{ padding: '4px 11px', borderRadius: 999, fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.4, color, background: bg, border: `1px solid ${border}` }}>{status}</span>;
 };
 
 const TransactionsPage = () => {
@@ -39,82 +35,78 @@ const TransactionsPage = () => {
       const { data } = await api.get(`/transactions?${params}`);
       setTransactions(data.transactions);
       setTotal(data.total);
-    } catch (err) {
-      console.error('Transactions fetch error:', err.message);
-    }
+    } catch (err) { console.error(err.message); }
     setLoading(false);
   }, [filter, page]);
 
-  useEffect(() => {
-    fetchTransactions();
-  }, [fetchTransactions]);
+  useEffect(() => { fetchTransactions(); }, [fetchTransactions]);
 
   const filters = [
-    { label: 'All', value: '' },
-    { label: 'Deposits', value: 'deposit' },
-    { label: 'Withdrawals', value: 'withdrawal' },
-    { label: 'Transfers', value: 'transfer_out' },
+    { label: 'All', value: '' }, { label: 'Deposits', value: 'deposit' },
+    { label: 'Withdrawals', value: 'withdrawal' }, { label: 'Sent', value: 'transfer_out' },
     { label: 'Received', value: 'transfer_in' },
   ];
 
   return (
     <Layout>
       <div style={{ padding: '28px 24px', maxWidth: 1100, margin: '0 auto' }}>
-        <h1 style={{ fontFamily: 'Space Grotesk', fontSize: 24, fontWeight: 700, marginBottom: 6 }}>Transaction History</h1>
-        <p style={{ color: 'var(--text-secondary)', fontSize: 14, marginBottom: 24 }}>{total} total transactions</p>
+        <div style={{ marginBottom: 24 }}>
+          <h1 style={{ fontFamily: 'Space Grotesk', fontSize: 24, fontWeight: 700, marginBottom: 4, letterSpacing: -0.5 }}>Transaction History</h1>
+          <p style={{ color: 'var(--text-secondary)', fontSize: 14 }}>{total} total transactions</p>
+        </div>
 
         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 20, alignItems: 'center' }}>
-          <FiFilter style={{ color: 'var(--text-muted)', marginRight: 4 }} />
+          <FiFilter style={{ color: 'var(--text-muted)', marginRight: 2 }} />
           {filters.map(f => (
             <button key={f.value} onClick={() => { setFilter(f.value); setPage(1); }} style={{
-              padding: '8px 16px', borderRadius: 20, fontSize: 13, fontWeight: 500, cursor: 'pointer',
-              background: filter === f.value ? 'rgba(0,212,163,0.15)' : 'var(--bg-card)',
-              color: filter === f.value ? '#00d4a3' : 'var(--text-secondary)',
-              border: `1px solid ${filter === f.value ? 'rgba(0,212,163,0.4)' : 'var(--border)'}`,
-              transition: 'all 0.2s',
+              padding: '8px 16px', borderRadius: 999, fontSize: 13, fontWeight: 500, cursor: 'pointer',
+              background: filter === f.value ? 'rgba(0,230,168,0.12)' : 'var(--bg-card)',
+              color: filter === f.value ? '#00e6a8' : 'var(--text-secondary)',
+              border: `1px solid ${filter === f.value ? 'rgba(0,230,168,0.35)' : 'var(--border)'}`,
+              transition: 'var(--transition)',
             }}>{f.label}</button>
           ))}
         </div>
 
-        <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 16, overflow: 'hidden' }}>
+        <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 20, overflow: 'hidden' }}>
           {loading ? (
-            <div style={{ padding: 48, textAlign: 'center', color: 'var(--text-muted)' }}>Loading transactions...</div>
+            <div style={{ padding: 56, textAlign: 'center', color: 'var(--text-muted)', fontSize: 14 }}>Loading transactions...</div>
           ) : transactions.length === 0 ? (
-            <div style={{ padding: 64, textAlign: 'center', color: 'var(--text-muted)' }}>
-              <div style={{ fontSize: 40, marginBottom: 12 }}>📋</div>
-              <div>No transactions found</div>
+            <div style={{ padding: 72, textAlign: 'center', color: 'var(--text-muted)' }}>
+              <div style={{ fontSize: 40, marginBottom: 12, opacity: 0.35 }}>📋</div>
+              <div style={{ fontSize: 15, fontWeight: 500 }}>No transactions found</div>
             </div>
           ) : (
             <>
               <div style={{ overflowX: 'auto' }}>
                 <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                   <thead>
-                    <tr>
-                      {['Type', 'Transaction ID', 'Amount', 'Status', 'Date'].map(h => (
-                        <th key={h} style={{ padding: '14px 20px', textAlign: 'left', fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.5, color: 'var(--text-muted)', borderBottom: '1px solid var(--border)', whiteSpace: 'nowrap' }}>{h}</th>
+                    <tr style={{ background: 'var(--bg-primary)' }}>
+                      {['Type', 'Transaction ID', 'Amount', 'Status', 'Date & Time'].map(h => (
+                        <th key={h} style={{ padding: '13px 20px', textAlign: 'left', fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.5, color: 'var(--text-muted)', borderBottom: '1px solid var(--border)', whiteSpace: 'nowrap' }}>{h}</th>
                       ))}
                     </tr>
                   </thead>
                   <tbody>
                     {transactions.map(tx => (
                       <tr key={tx._id}
-                        onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.02)'}
+                        onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-card-hover)'}
                         onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
                         style={{ transition: 'background 0.15s' }}>
-                        <td style={{ padding: '16px 20px', borderBottom: '1px solid var(--border)' }}>
+                        <td style={{ padding: '15px 20px', borderBottom: '1px solid var(--border)' }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                            <div style={{ width: 36, height: 36, borderRadius: 10, background: `${typeColor(tx.type)}18`, display: 'flex', alignItems: 'center', justifyContent: 'center', color: typeColor(tx.type), fontSize: 16, flexShrink: 0 }}>
+                            <div style={{ width: 38, height: 38, borderRadius: 11, background: `${typeColor(tx.type)}14`, display: 'flex', alignItems: 'center', justifyContent: 'center', color: typeColor(tx.type), fontSize: 16, flexShrink: 0 }}>
                               {typeIcon(tx.type)}
                             </div>
-                            <span style={{ fontWeight: 500, fontSize: 14 }}>{typeLabel(tx.type)}</span>
+                            <span style={{ fontWeight: 600, fontSize: 14 }}>{typeLabel(tx.type)}</span>
                           </div>
                         </td>
-                        <td style={{ padding: '16px 20px', borderBottom: '1px solid var(--border)', fontFamily: 'monospace', fontSize: 12, color: 'var(--text-secondary)' }}>{tx.transactionId}</td>
-                        <td style={{ padding: '16px 20px', borderBottom: '1px solid var(--border)', fontWeight: 700, color: typeColor(tx.type), fontFamily: 'Space Grotesk', fontSize: 15 }}>
+                        <td style={{ padding: '15px 20px', borderBottom: '1px solid var(--border)', fontFamily: 'var(--font-mono)', fontSize: 11.5, color: 'var(--text-secondary)' }}>{tx.transactionId}</td>
+                        <td style={{ padding: '15px 20px', borderBottom: '1px solid var(--border)', fontWeight: 800, color: typeColor(tx.type), fontFamily: 'Space Grotesk', fontSize: 15.5, letterSpacing: -0.3 }}>
                           {['deposit', 'transfer_in'].includes(tx.type) ? '+' : '-'}${tx.amount.toFixed(2)}
                         </td>
-                        <td style={{ padding: '16px 20px', borderBottom: '1px solid var(--border)' }}><StatusBadge status={tx.status} /></td>
-                        <td style={{ padding: '16px 20px', borderBottom: '1px solid var(--border)', fontSize: 13, color: 'var(--text-secondary)', whiteSpace: 'nowrap' }}>
+                        <td style={{ padding: '15px 20px', borderBottom: '1px solid var(--border)' }}><StatusBadge status={tx.status} /></td>
+                        <td style={{ padding: '15px 20px', borderBottom: '1px solid var(--border)', fontSize: 13, color: 'var(--text-secondary)', whiteSpace: 'nowrap' }}>
                           {format(new Date(tx.createdAt), 'MMM d, yyyy')}<br />
                           <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>{format(new Date(tx.createdAt), 'HH:mm:ss')}</span>
                         </td>
@@ -124,9 +116,9 @@ const TransactionsPage = () => {
                 </table>
               </div>
               {total > LIMIT && (
-                <div style={{ padding: '16px 20px', display: 'flex', justifyContent: 'center', gap: 8, borderTop: '1px solid var(--border)' }}>
+                <div style={{ padding: '16px 20px', display: 'flex', justifyContent: 'center', gap: 6, borderTop: '1px solid var(--border)' }}>
                   {Array.from({ length: Math.ceil(total / LIMIT) }, (_, i) => (
-                    <button key={i} onClick={() => setPage(i + 1)} style={{ width: 34, height: 34, borderRadius: 8, border: `1px solid ${page === i + 1 ? 'rgba(0,212,163,0.4)' : 'var(--border)'}`, background: page === i + 1 ? 'rgba(0,212,163,0.1)' : 'transparent', color: page === i + 1 ? '#00d4a3' : 'var(--text-secondary)', cursor: 'pointer', fontWeight: 600, fontSize: 13 }}>{i + 1}</button>
+                    <button key={i} onClick={() => setPage(i + 1)} style={{ width: 34, height: 34, borderRadius: 9, border: `1px solid ${page === i + 1 ? 'rgba(0,230,168,0.4)' : 'var(--border)'}`, background: page === i + 1 ? 'rgba(0,230,168,0.12)' : 'transparent', color: page === i + 1 ? '#00e6a8' : 'var(--text-secondary)', cursor: 'pointer', fontWeight: 700, fontSize: 13, transition: 'var(--transition)' }}>{i + 1}</button>
                   ))}
                 </div>
               )}
@@ -139,4 +131,4 @@ const TransactionsPage = () => {
 };
 
 export default TransactionsPage;
-    
+  
