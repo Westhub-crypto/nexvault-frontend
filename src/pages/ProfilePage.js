@@ -3,28 +3,43 @@ import Layout from '../components/Layout';
 import api from '../utils/api';
 import toast from 'react-hot-toast';
 import { useAuth } from '../context/AuthContext';
-import { FiUser, FiMail, FiPhone, FiGlobe, FiLock, FiShield, FiSave } from 'react-icons/fi';
+import { FiUser, FiMail, FiPhone, FiGlobe, FiLock, FiShield, FiSave, FiEdit3 } from 'react-icons/fi';
+
+const inputStyle = { width: '100%', padding: '13px 16px', background: 'var(--bg-primary)', border: '1.5px solid var(--border)', borderRadius: 12, color: 'var(--text-primary)', fontSize: 14.5, outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit', transition: 'border-color 0.2s' };
 
 const Section = ({ title, icon, children }) => (
-  <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 16, overflow: 'hidden', marginBottom: 20 }}>
+  <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 20, overflow: 'hidden', marginBottom: 20 }}>
     <div style={{ padding: '18px 24px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', gap: 10 }}>
-      <span style={{ color: 'var(--accent)', fontSize: 18 }}>{icon}</span>
-      <h3 style={{ fontFamily: 'Space Grotesk', fontSize: 16, fontWeight: 600 }}>{title}</h3>
+      <div style={{ width: 34, height: 34, borderRadius: 10, background: 'var(--accent-glow)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--accent)', fontSize: 16 }}>{icon}</div>
+      <h3 style={{ fontFamily: 'Space Grotesk', fontSize: 15.5, fontWeight: 600, letterSpacing: -0.3 }}>{title}</h3>
     </div>
     <div style={{ padding: 24 }}>{children}</div>
   </div>
 );
 
 const Field = ({ label, icon, ...props }) => (
-  <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-    <label style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-secondary)' }}>{label}</label>
-    <div style={{ position: 'relative' }}>
-      {icon && <span style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)', fontSize: 15 }}>{icon}</span>}
-      <input {...props} style={{ width: '100%', padding: `12px 16px 12px ${icon ? '42px' : '16px'}`, background: 'var(--bg-primary)', border: '1px solid var(--border)', borderRadius: 10, color: 'var(--text-primary)', fontSize: 14, outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit', transition: 'border-color 0.2s' }}
-        onFocus={e => e.target.style.borderColor = '#00d4a3'} onBlur={e => e.target.style.borderColor = 'var(--border)'}
-      />
-    </div>
+  <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
+    <label style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: 6 }}>
+      {icon && <span style={{ fontSize: 14, color: 'var(--text-muted)' }}>{icon}</span>} {label}
+    </label>
+    <input {...props} style={inputStyle}
+      onFocus={e => e.target.style.borderColor = 'var(--accent)'}
+      onBlur={e => e.target.style.borderColor = 'var(--border)'}
+    />
   </div>
+);
+
+const SubmitBtn = ({ loading, label }) => (
+  <button type="submit" disabled={loading} style={{
+    display: 'inline-flex', alignItems: 'center', gap: 8, padding: '12px 24px', borderRadius: 12, border: 'none',
+    background: loading ? 'var(--bg-primary)' : 'linear-gradient(135deg, #00e6a8, #00c794)',
+    color: loading ? 'var(--text-muted)' : '#04140f', fontSize: 14, fontWeight: 700,
+    cursor: loading ? 'not-allowed' : 'pointer',
+    boxShadow: loading ? 'none' : '0 4px 18px rgba(0,230,168,0.28)',
+    transition: 'var(--transition)',
+  }}>
+    <FiSave size={15} /> {loading ? 'Saving...' : label}
+  </button>
 );
 
 const ProfilePage = () => {
@@ -71,46 +86,51 @@ const ProfilePage = () => {
     finally { setSaving(s => ({ ...s, pin: false })); }
   };
 
-  const SubmitBtn = ({ loading, label }) => (
-    <button type="submit" disabled={loading} style={{
-      display: 'flex', alignItems: 'center', gap: 8, padding: '12px 24px', borderRadius: 10, border: 'none',
-      background: loading ? 'var(--bg-primary)' : 'linear-gradient(135deg, #00d4a3, #00b890)',
-      color: loading ? 'var(--text-muted)' : '#0d1117', fontSize: 14, fontWeight: 700,
-      cursor: loading ? 'not-allowed' : 'pointer', boxShadow: loading ? 'none' : '0 4px 16px rgba(0,212,163,0.25)'
-    }}><FiSave />{loading ? 'Saving...' : label}</button>
-  );
-
   return (
     <Layout>
       <div style={{ padding: '28px 24px', maxWidth: 700, margin: '0 auto' }}>
-        {/* Header */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 20, marginBottom: 32 }}>
-          <div style={{ width: 72, height: 72, borderRadius: '50%', background: 'linear-gradient(135deg, #00d4a3, #7c6ef7)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 28, fontWeight: 800, color: '#0d1117', flexShrink: 0 }}>
+        {/* Profile header */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 20, marginBottom: 32, padding: '24px 28px', background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 20 }}>
+          <div style={{ width: 72, height: 72, borderRadius: '50%', background: 'linear-gradient(135deg, #00e6a8, #8b7cf6)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 28, fontWeight: 800, color: '#04140f', flexShrink: 0, boxShadow: '0 8px 24px rgba(0,230,168,0.3)' }}>
             {user?.fullName?.[0]?.toUpperCase()}
           </div>
-          <div>
-            <h1 style={{ fontFamily: 'Space Grotesk', fontSize: 22, fontWeight: 700, marginBottom: 4 }}>{user?.fullName}</h1>
-            <div style={{ fontSize: 13, color: 'var(--text-secondary)' }}>{user?.email}</div>
-            <span style={{ display: 'inline-block', marginTop: 6, padding: '3px 10px', borderRadius: 20, fontSize: 11, fontWeight: 700, textTransform: 'uppercase', background: 'rgba(0,212,163,0.1)', color: '#00d4a3', border: '1px solid rgba(0,212,163,0.3)' }}>
-              {user?.status}
-            </span>
+          <div style={{ flex: 1 }}>
+            <h1 style={{ fontFamily: 'Space Grotesk', fontSize: 21, fontWeight: 700, marginBottom: 4, letterSpacing: -0.4 }}>{user?.fullName}</h1>
+            <div style={{ fontSize: 13.5, color: 'var(--text-secondary)', marginBottom: 8 }}>{user?.email}</div>
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '4px 12px', borderRadius: 999, fontSize: 11.5, fontWeight: 700, textTransform: 'uppercase', background: 'rgba(0,230,168,0.1)', color: '#00e6a8', border: '1px solid rgba(0,230,168,0.3)' }}>
+                {user?.status}
+              </span>
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '4px 12px', borderRadius: 999, fontSize: 11.5, fontWeight: 700, textTransform: 'uppercase', background: 'rgba(139,124,246,0.1)', color: '#8b7cf6', border: '1px solid rgba(139,124,246,0.3)' }}>
+                {user?.country}
+              </span>
+            </div>
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 4 }}>
+            <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>Balance</div>
+            <div style={{ fontFamily: 'Space Grotesk', fontSize: 22, fontWeight: 800, color: '#00e6a8', letterSpacing: -0.5 }}>${user?.balance?.toFixed(2) || '0.00'}</div>
           </div>
         </div>
 
-        {/* Profile info */}
-        <Section title="Personal Information" icon={<FiUser />}>
+        {/* Personal Info */}
+        <Section title="Personal Information" icon={<FiEdit3 />}>
           <form onSubmit={saveProfile} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 16 }}>
               <Field label="Full Name" icon={<FiUser />} value={profile.fullName} onChange={e => setProfile(s => ({ ...s, fullName: e.target.value }))} required />
               <Field label="Phone Number" icon={<FiPhone />} value={profile.phone} onChange={e => setProfile(s => ({ ...s, phone: e.target.value }))} required />
               <Field label="Country" icon={<FiGlobe />} value={profile.country} onChange={e => setProfile(s => ({ ...s, country: e.target.value }))} required />
-              <Field label="Email (read-only)" icon={<FiMail />} value={user?.email || ''} readOnly style={{ opacity: 0.6, cursor: 'not-allowed' }} />
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
+                <label style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <FiMail style={{ fontSize: 14, color: 'var(--text-muted)' }} /> Email (read-only)
+                </label>
+                <input value={user?.email || ''} readOnly style={{ ...inputStyle, opacity: 0.5, cursor: 'not-allowed' }} />
+              </div>
             </div>
             <div><SubmitBtn loading={saving.profile} label="Save Profile" /></div>
           </form>
         </Section>
 
-        {/* Change password */}
+        {/* Change Password */}
         <Section title="Change Password" icon={<FiLock />}>
           <form onSubmit={changePassword} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
             <Field label="Current Password" type="password" value={passwords.currentPassword} onChange={e => setPasswords(s => ({ ...s, currentPassword: e.target.value }))} placeholder="Enter current password" required />
@@ -124,28 +144,22 @@ const ProfilePage = () => {
 
         {/* Withdrawal PIN */}
         <Section title="Withdrawal PIN" icon={<FiShield />}>
-          <p style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 16, lineHeight: 1.6 }}>
-            Your 4-digit PIN is required for all withdrawals and transfers. Keep it secret and secure.
+          <p style={{ fontSize: 13.5, color: 'var(--text-secondary)', marginBottom: 20, lineHeight: 1.6 }}>
+            Your 4-digit PIN is required for all withdrawals and transfers. Never share it with anyone.
           </p>
           <form onSubmit={savePin} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-            {user?.withdrawalPin !== undefined && (
-              <Field label="Current PIN (if set)" type="password" maxLength={4} value={pin.currentPin} onChange={e => setPin(s => ({ ...s, currentPin: e.target.value.replace(/\D/, '') }))} placeholder="Enter current PIN" />
-            )}
+            <Field label="Current PIN (if already set)" type="password" maxLength={4} value={pin.currentPin} onChange={e => setPin(s => ({ ...s, currentPin: e.target.value.replace(/\D/, '') }))} placeholder="Enter current PIN" />
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 16 }}>
-              <div>
-                <label style={{ display: 'block', fontSize: 13, fontWeight: 500, color: 'var(--text-secondary)', marginBottom: 6 }}>New PIN</label>
-                <input type="password" maxLength={4} value={pin.newPin} onChange={e => setPin(s => ({ ...s, newPin: e.target.value.replace(/\D/, '') }))} placeholder="••••" required
-                  style={{ width: '100%', padding: '14px', background: 'var(--bg-primary)', border: '1px solid var(--border)', borderRadius: 10, color: 'var(--text-primary)', fontSize: 24, letterSpacing: 10, outline: 'none', boxSizing: 'border-box', textAlign: 'center' }}
-                  onFocus={e => e.target.style.borderColor = '#00d4a3'} onBlur={e => e.target.style.borderColor = 'var(--border)'}
-                />
-              </div>
-              <div>
-                <label style={{ display: 'block', fontSize: 13, fontWeight: 500, color: 'var(--text-secondary)', marginBottom: 6 }}>Confirm PIN</label>
-                <input type="password" maxLength={4} value={pin.confirmPin} onChange={e => setPin(s => ({ ...s, confirmPin: e.target.value.replace(/\D/, '') }))} placeholder="••••" required
-                  style={{ width: '100%', padding: '14px', background: 'var(--bg-primary)', border: '1px solid var(--border)', borderRadius: 10, color: 'var(--text-primary)', fontSize: 24, letterSpacing: 10, outline: 'none', boxSizing: 'border-box', textAlign: 'center' }}
-                  onFocus={e => e.target.style.borderColor = '#00d4a3'} onBlur={e => e.target.style.borderColor = 'var(--border)'}
-                />
-              </div>
+              {[['newPin', 'New PIN'], ['confirmPin', 'Confirm PIN']].map(([key, label]) => (
+                <div key={key}>
+                  <label style={{ display: 'block', fontSize: 13, fontWeight: 500, color: 'var(--text-secondary)', marginBottom: 7 }}>{label}</label>
+                  <input type="password" maxLength={4} value={pin[key]} onChange={e => setPin(s => ({ ...s, [key]: e.target.value.replace(/\D/, '') }))} placeholder="••••" required
+                    style={{ ...inputStyle, fontSize: 26, letterSpacing: 12, textAlign: 'center' }}
+                    onFocus={e => e.target.style.borderColor = 'var(--accent)'}
+                    onBlur={e => e.target.style.borderColor = 'var(--border)'}
+                  />
+                </div>
+              ))}
             </div>
             <div><SubmitBtn loading={saving.pin} label="Save PIN" /></div>
           </form>
