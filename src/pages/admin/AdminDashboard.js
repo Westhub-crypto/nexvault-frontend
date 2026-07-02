@@ -1,120 +1,99 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import Layout from '../../components/Layout';
 import api from '../../utils/api';
-import { FiExternalLink, FiRefreshCw, FiFilter } from 'react-icons/fi';
+import { FiUsers, FiArrowDownCircle, FiArrowUpCircle, FiClock, FiDollarSign, FiAlertCircle, FiActivity, FiArrowUpRight } from 'react-icons/fi';
 import { format } from 'date-fns';
 
-const StatusBadge = ({ status }) => {
-  const map = { pending: ['#ffa502', 'rgba(255,165,2,0.1)'], approved: ['#00d4a3', 'rgba(0,212,163,0.1)'], rejected: ['#ff4757', 'rgba(255,71,87,0.1)'], completed: ['#7c6ef7', 'rgba(124,110,247,0.1)'] };
-  const [color, bg] = map[status] || ['#8892a4', 'rgba(136,146,164,0.1)'];
-  return <span style={{ padding: '3px 10px', borderRadius: 20, fontSize: 11, fontWeight: 700, textTransform: 'uppercase', color, background: bg, border: `1px solid ${color}40` }}>{status}</span>;
-};
+const StatCard = ({ label, value, icon, color, sub }) => (
+  <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 18, padding: '22px 24px', position: 'relative', overflow: 'hidden' }}>
+    <div style={{ position: 'absolute', top: -28, right: -28, width: 84, height: 84, borderRadius: '50%', background: `${color}12` }} />
+    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 14 }}>
+      <span style={{ fontSize: 12.5, color: 'var(--text-secondary)', fontWeight: 500 }}>{label}</span>
+      <div style={{ width: 36, height: 36, borderRadius: 11, background: `${color}16`, display: 'flex', alignItems: 'center', justifyContent: 'center', color, fontSize: 17 }}>{icon}</div>
+    </div>
+    <div style={{ fontFamily: 'Space Grotesk', fontSize: 28, fontWeight: 700, letterSpacing: -0.5 }}>{value}</div>
+    {sub && <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 6 }}>{sub}</div>}
+  </div>
+);
 
-const API_BASE = process.env.REACT_APP_API_URL || '/api';
-
-const AdminTransactions = () => {
-  const [transactions, setTransactions] = useState([]);
+const AdminDashboard = () => {
+  const [analytics, setAnalytics] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [typeFilter, setTypeFilter] = useState('');
-  const [statusFilter, setStatusFilter] = useState('');
-  const [page, setPage] = useState(1);
-  const [total, setTotal] = useState(0);
-  const LIMIT = 20;
 
-  const fetchTransactions = useCallback(async () => {
-    setLoading(true);
-    try {
-      const params = new URLSearchParams({ page, limit: LIMIT });
-      if (typeFilter) params.append('type', typeFilter);
-      if (statusFilter) params.append('status', statusFilter);
-      const { data } = await api.get(`/admin/transactions?${params}`);
-      setTransactions(data.transactions); setTotal(data.total);
-    } catch (err) {
-      console.error('Fetch transactions error:', err.message);
-    }
-    setLoading(false);
-  }, [typeFilter, statusFilter, page]);
+  useEffect(() => {
+    api.get('/admin/analytics').then(({ data }) => { setAnalytics(data.analytics); setLoading(false); }).catch(() => setLoading(false));
+  }, []);
 
-  useEffect(() => { fetchTransactions(); }, [fetchTransactions]);
-
-  const typeLabel = (t) => ({ deposit: 'Deposit', withdrawal: 'Withdrawal', transfer_in: 'Transfer In', transfer_out: 'Transfer Out', activation: 'Activation', gas_fee: 'Gas Fee' }[t] || t);
-  const typeColor = (t) => ['deposit', 'transfer_in'].includes(t) ? '#00d4a3' : '#ff4757';
+  if (loading) return <Layout><div style={{ padding: 56, textAlign: 'center', color: 'var(--text-muted)' }}>Loading analytics...</div></Layout>;
+  const a = analytics || {};
 
   return (
     <Layout>
       <div style={{ padding: '28px 24px', maxWidth: 1280, margin: '0 auto' }}>
-        <div style={{ marginBottom: 24 }}>
-          <h1 style={{ fontFamily: 'Space Grotesk', fontSize: 24, fontWeight: 700, marginBottom: 4 }}>All Transactions</h1>
-          <p style={{ color: 'var(--text-secondary)', fontSize: 14 }}>{total} total transactions</p>
+        <div style={{ marginBottom: 28 }}>
+          <h1 style={{ fontFamily: 'Space Grotesk', fontSize: 25, fontWeight: 700, marginBottom: 4, letterSpacing: -0.5 }}>Admin Dashboard</h1>
+          <p style={{ color: 'var(--text-secondary)', fontSize: 14 }}>Platform overview and analytics</p>
         </div>
 
-        {/* Filters */}
-        <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginBottom: 20, alignItems: 'center' }}>
-          <FiFilter style={{ color: 'var(--text-muted)' }} />
-          <select value={typeFilter} onChange={e => { setTypeFilter(e.target.value); setPage(1); }} style={{ padding: '10px 16px', background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 10, color: 'var(--text-primary)', fontSize: 13, outline: 'none', cursor: 'pointer' }}>
-            <option value="">All Types</option>
-            {['deposit', 'withdrawal', 'transfer_in', 'transfer_out', 'activation', 'gas_fee'].map(t => <option key={t} value={t}>{typeLabel(t)}</option>)}
-          </select>
-          <select value={statusFilter} onChange={e => { setStatusFilter(e.target.value); setPage(1); }} style={{ padding: '10px 16px', background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 10, color: 'var(--text-primary)', fontSize: 13, outline: 'none', cursor: 'pointer' }}>
-            <option value="">All Statuses</option>
-            {['pending', 'approved', 'rejected', 'completed'].map(s => <option key={s} value={s}>{s}</option>)}
-          </select>
-          <button onClick={fetchTransactions} style={{ padding: '10px 14px', borderRadius: 10, border: '1px solid var(--border)', background: 'var(--bg-card)', color: 'var(--text-secondary)', cursor: 'pointer', fontSize: 16 }}><FiRefreshCw /></button>
-        </div>
-
-        <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 16, overflow: 'hidden' }}>
-          <div style={{ overflowX: 'auto' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-              <thead>
-                <tr>
-                  {['User', 'Type', 'Amount', 'Gas Fee', 'Status', 'Proof', 'Date'].map(h => (
-                    <th key={h} style={{ padding: '13px 18px', textAlign: 'left', fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.5, color: 'var(--text-muted)', borderBottom: '1px solid var(--border)', whiteSpace: 'nowrap' }}>{h}</th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {loading ? (
-                  <tr><td colSpan={7} style={{ padding: 40, textAlign: 'center', color: 'var(--text-muted)' }}>Loading...</td></tr>
-                ) : transactions.length === 0 ? (
-                  <tr><td colSpan={7} style={{ padding: 48, textAlign: 'center', color: 'var(--text-muted)' }}>No transactions found</td></tr>
-                ) : transactions.map(tx => (
-                  <tr key={tx._id} onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.015)'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'} style={{ transition: 'background 0.15s' }}>
-                    <td style={{ padding: '14px 18px', borderBottom: '1px solid var(--border)' }}>
-                      <div style={{ fontWeight: 600, fontSize: 13 }}>{tx.user?.fullName || '—'}</div>
-                      <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>{tx.user?.email}</div>
-                    </td>
-                    <td style={{ padding: '14px 18px', borderBottom: '1px solid var(--border)', fontSize: 13, color: typeColor(tx.type), fontWeight: 600 }}>{typeLabel(tx.type)}</td>
-                    <td style={{ padding: '14px 18px', borderBottom: '1px solid var(--border)', fontWeight: 700, fontFamily: 'Space Grotesk', color: typeColor(tx.type) }}>${tx.amount?.toFixed(2)}</td>
-                    <td style={{ padding: '14px 18px', borderBottom: '1px solid var(--border)', fontSize: 13, color: 'var(--text-secondary)' }}>{tx.gasFee > 0 ? `$${tx.gasFee.toFixed(2)}` : '—'}</td>
-                    <td style={{ padding: '14px 18px', borderBottom: '1px solid var(--border)' }}><StatusBadge status={tx.status} /></td>
-                    <td style={{ padding: '14px 18px', borderBottom: '1px solid var(--border)' }}>
-                      {tx.proofOfPayment && (
-                        <a href={`${API_BASE.replace('/api', '')}/uploads/${tx.proofOfPayment}`} target="_blank" rel="noreferrer" style={{ display: 'inline-flex', alignItems: 'center', gap: 4, color: '#7c6ef7', fontSize: 12, fontWeight: 500, textDecoration: 'none' }}>
-                          <FiExternalLink /> View
-                        </a>
-                      )}
-                      {tx.gasFeeProof && (
-                        <a href={`${API_BASE.replace('/api', '')}/uploads/${tx.gasFeeProof}`} target="_blank" rel="noreferrer" style={{ display: 'inline-flex', alignItems: 'center', gap: 4, color: '#ffa502', fontSize: 12, fontWeight: 500, textDecoration: 'none', marginLeft: 8 }}>
-                          <FiExternalLink /> Gas
-                        </a>
-                      )}
-                      {!tx.proofOfPayment && !tx.gasFeeProof && <span style={{ color: 'var(--text-muted)', fontSize: 12 }}>—</span>}
-                    </td>
-                    <td style={{ padding: '14px 18px', borderBottom: '1px solid var(--border)', fontSize: 12, color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>
-                      {format(new Date(tx.createdAt), 'MMM d, yyyy')}<br />
-                      <span style={{ fontSize: 10 }}>{format(new Date(tx.createdAt), 'HH:mm')}</span>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+        {(a.pendingDeposits > 0 || a.pendingWithdrawals > 0 || a.pendingActivations > 0) && (
+          <div style={{ background: 'rgba(255,181,71,0.07)', border: '1px solid rgba(255,181,71,0.25)', borderRadius: 14, padding: '15px 20px', marginBottom: 24, display: 'flex', alignItems: 'center', gap: 12 }}>
+            <FiAlertCircle style={{ color: '#ffb547', fontSize: 20, flexShrink: 0 }} />
+            <div style={{ fontSize: 13.5, color: '#ffb547' }}>
+              <strong>Action required: </strong>
+              {[a.pendingActivations > 0 && `${a.pendingActivations} activation${a.pendingActivations > 1 ? 's' : ''}`, a.pendingDeposits > 0 && `${a.pendingDeposits} deposit${a.pendingDeposits > 1 ? 's' : ''}`, a.pendingWithdrawals > 0 && `${a.pendingWithdrawals} withdrawal${a.pendingWithdrawals > 1 ? 's' : ''}`].filter(Boolean).join(' · ')} pending review.
+            </div>
           </div>
+        )}
 
-          {total > LIMIT && (
-            <div style={{ padding: '14px 20px', display: 'flex', justifyContent: 'center', gap: 6, borderTop: '1px solid var(--border)' }}>
-              {Array.from({ length: Math.ceil(total / LIMIT) }, (_, i) => (
-                <button key={i} onClick={() => setPage(i + 1)} style={{ width: 32, height: 32, borderRadius: 8, border: `1px solid ${page === i + 1 ? 'rgba(0,212,163,0.4)' : 'var(--border)'}`, background: page === i + 1 ? 'rgba(0,212,163,0.1)' : 'transparent', color: page === i + 1 ? '#00d4a3' : 'var(--text-secondary)', cursor: 'pointer', fontWeight: 600, fontSize: 13 }}>{i + 1}</button>
-              ))}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(195px, 1fr))', gap: 14, marginBottom: 24 }}>
+          <StatCard label="Total Users" value={a.totalUsers || 0} icon={<FiUsers />} color="#00e6a8" sub={`${a.activeUsers || 0} active`} />
+          <StatCard label="Total Deposited" value={`$${(a.totalDeposited || 0).toFixed(2)}`} icon={<FiArrowDownCircle />} color="#8b7cf6" />
+          <StatCard label="Total Withdrawn" value={`$${(a.totalWithdrawn || 0).toFixed(2)}`} icon={<FiArrowUpCircle />} color="#ffb547" />
+          <StatCard label="User Balances" value={`$${(a.totalBalances || 0).toFixed(2)}`} icon={<FiDollarSign />} color="#00e6a8" sub="Combined" />
+          <StatCard label="Pending Deposits" value={a.pendingDeposits || 0} icon={<FiClock />} color="#ffb547" />
+          <StatCard label="Pending Withdrawals" value={a.pendingWithdrawals || 0} icon={<FiClock />} color="#ff5c72" />
+          <StatCard label="Pending Activations" value={a.pendingActivations || 0} icon={<FiAlertCircle />} color="#ff5c72" />
+          <StatCard label="Suspended Users" value={a.suspendedUsers || 0} icon={<FiActivity />} color="#ff5c72" />
+        </div>
+
+        <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 20, overflow: 'hidden' }}>
+          <div style={{ padding: '18px 24px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <h3 style={{ fontFamily: 'Space Grotesk', fontSize: 15.5, fontWeight: 600, letterSpacing: -0.3 }}>Recent Transactions</h3>
+          </div>
+          {!(a.recentTransactions?.length) ? (
+            <div style={{ padding: 48, textAlign: 'center', color: 'var(--text-muted)', fontSize: 14 }}>No transactions yet</div>
+          ) : (
+            <div style={{ overflowX: 'auto' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                <thead>
+                  <tr style={{ background: 'var(--bg-primary)' }}>
+                    {['User', 'Type', 'Amount', 'Status', 'Date'].map(h => (
+                      <th key={h} style={{ padding: '12px 20px', textAlign: 'left', fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.5, color: 'var(--text-muted)', borderBottom: '1px solid var(--border)' }}>{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {(a.recentTransactions || []).map(tx => (
+                    <tr key={tx._id}
+                      onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-card-hover)'}
+                      onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                      style={{ transition: 'background 0.15s' }}>
+                      <td style={{ padding: '14px 20px', borderBottom: '1px solid var(--border)' }}>
+                        <div style={{ fontWeight: 600, fontSize: 13.5 }}>{tx.user?.fullName || '—'}</div>
+                        <div style={{ fontSize: 11.5, color: 'var(--text-muted)' }}>{tx.user?.email}</div>
+                      </td>
+                      <td style={{ padding: '14px 20px', borderBottom: '1px solid var(--border)', fontSize: 13, textTransform: 'capitalize', color: ['deposit','transfer_in'].includes(tx.type) ? '#00e6a8' : '#ff5c72', fontWeight: 600 }}>{tx.type?.replace('_', ' ')}</td>
+                      <td style={{ padding: '14px 20px', borderBottom: '1px solid var(--border)', fontWeight: 800, fontFamily: 'Space Grotesk', color: ['deposit','transfer_in'].includes(tx.type) ? '#00e6a8' : '#ff5c72', letterSpacing: -0.3 }}>${tx.amount?.toFixed(2)}</td>
+                      <td style={{ padding: '14px 20px', borderBottom: '1px solid var(--border)' }}>
+                        <span style={{ padding: '4px 11px', borderRadius: 999, fontSize: 11, fontWeight: 700, textTransform: 'uppercase', color: tx.status === 'approved' || tx.status === 'completed' ? '#00e6a8' : tx.status === 'rejected' ? '#ff5c72' : '#ffb547', background: tx.status === 'approved' || tx.status === 'completed' ? 'rgba(0,230,168,0.1)' : tx.status === 'rejected' ? 'rgba(255,92,114,0.1)' : 'rgba(255,181,71,0.1)' }}>
+                          {tx.status}
+                        </span>
+                      </td>
+                      <td style={{ padding: '14px 20px', borderBottom: '1px solid var(--border)', fontSize: 12.5, color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>{format(new Date(tx.createdAt), 'MMM d, HH:mm')}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           )}
         </div>
@@ -123,5 +102,5 @@ const AdminTransactions = () => {
   );
 };
 
-export default AdminTransactions;
-    
+export default AdminDashboard;
+  
